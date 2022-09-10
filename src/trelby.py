@@ -163,7 +163,7 @@ class MyPanel(wx.ScrolledWindow):
             self, parent, id,
             # wxMSW/Windows does not seem to support
             # wx.NO_BORDER, which sucks
-            style = wx.WANTS_CHARS | wx.NO_BORDER | wx.HSCROLL)
+            style = wx.WANTS_CHARS | wx.NO_BORDER | wx.HSCROLL | wx.VSCROLL)
 
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -171,7 +171,6 @@ class MyPanel(wx.ScrolledWindow):
         self.ctrl = MyCtrl(self, -1)
 
         hsizer.Add(self.ctrl, 1, wx.EXPAND)
-        hsizer.Add(self.scrollBarVertical, 0, wx.EXPAND)
 
         self.scrollBarVertical.Bind(wx.EVT_COMMAND_SCROLL, self.ctrl.OnScroll)
 
@@ -179,7 +178,7 @@ class MyPanel(wx.ScrolledWindow):
 
         self.SetSizer(hsizer)
         self.SetScrollRate(int(self.ctrl.chX), int(self.ctrl.chY))
-        self.EnableScrolling(True, False)
+        self.EnableScrolling(True, True)
 
     # we never want the scrollbar to get the keyboard focus, pass it on to
     # the main widget
@@ -188,7 +187,7 @@ class MyPanel(wx.ScrolledWindow):
 
 class MyCtrl(wx.Control):
 
-    def __init__(self, parent, id):
+    def __init__(self, parent: MyPanel, id):
         style = wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE | wx.NO_BORDER
         wx.Control.__init__(self, parent, id, style = style)
 
@@ -435,9 +434,13 @@ class MyCtrl(wx.Control):
         else:
             return True
 
+    def getVisibleAreaSize(self):
+        ''' Size of the area visble in the scrolled window'''
+        return self.panel.GetSize()
+
     def updateScreen(self, redraw = True, setCommon = True):
         self.adjustScrollBar()
-        self.SetMinSize(wx.Size(int(self.pageW), 10)) # the vertical min size is irrelevant currently, as vertical scrolling is still self-implemented
+        self.SetMinSize(wx.Size(int(self.pageW), gd.vm.getDocumentHeight(self)))
         self.PostSizeEventToParent()
 
         if setCommon:

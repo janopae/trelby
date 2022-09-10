@@ -1,8 +1,12 @@
 # -*- coding: iso-8859-1 -*-
+import math
+from typing import Optional
 
 import config
 import mypager
 import pml
+import screenplay
+import trelby
 import util
 
 # Number of lines the smooth scroll will try to search. 15-20 is a good
@@ -82,6 +86,9 @@ class ViewMode:
     def getLineHeight(self, ctrl):
         raise Exception("getLineHeight not implemented")
 
+    def getDocumentHeight(self, ctrl, untilLine: Optional[int] = None) -> int:
+        raise Exception("getLineHeight not implemented")
+
     # return width of one page in (floating point) pixels
     def getPageWidth(self, ctrl):
         raise Exception("getPageWidth not implemented")
@@ -147,6 +154,10 @@ class ViewMode:
 
     # helper function for makeLineVisibleGeneric
     def _makeLineVisibleHelper(self, ctrl, line, direction, jumpAhead):
+        currentLine = ctrl.sp.line
+        linePosition = self.getDocumentHeight(ctrl, currentLine)
+
+
         startLine = ctrl.sp.getTopLine()
         sign = 1 if (direction == config.SCROLL_DOWN) else -1
         i = 1
@@ -207,13 +218,13 @@ class ViewModeDraft(ViewMode):
 
         marginLeft = int(ctrl.mm2p * cfg.marginLeft)
         cox = util.clamp((width - ctrl.pageW) // 2, 0)
-        fyd = ctrl.sp.cfgGl.fontYdelta
+        fyd = self.getLineHeight(ctrl)
         length = len(ls)
 
         texts = []
 
         while (y < height) and (i < length):
-            y += int((ctrl.sp.getSpacingBefore(i) / 10.0) * fyd)
+            y += self.__getLineHeightWithSpacing(ctrl, i)
 
             if y >= height:
                 break
@@ -245,6 +256,22 @@ class ViewModeDraft(ViewMode):
     def getLineHeight(self, ctrl):
         return ctrl.sp.cfgGl.fontYdelta
 
+    def __getLineHeightWithSpacing(self, ctrl, lineNumber: int):
+        lineHeightWithoutSpacing = self.getLineHeight(ctrl)
+        return lineHeightWithoutSpacing + int((ctrl.sp.getSpacingBefore(lineNumber) / 10.0) * lineHeightWithoutSpacing)
+
+    def getDocumentHeight(self, ctrl, untilLine: Optional[int] = None) -> int:
+        if untilLine is None:
+            untilLine = len(ctrl.sp.lines)
+        height = 0
+        for i in range(untilLine):
+            height += self.__getLineHeightWithSpacing(ctrl, i)
+
+        height += ctrl.getVisibleAreaSize().GetHeight() # One should always be able to scroll at least until the last line is on top
+
+        return height
+
+
     def getPageWidth(self, ctrl):
         # this is not really used for much in draft mode, as it has no
         # concept of page width, but it's safer to return something
@@ -264,7 +291,7 @@ class ViewModeDraft(ViewMode):
 # Layout view mode. Pages are shown with the actual layout they would
 # have.
 class ViewModeLayout(ViewMode):
-
+    PAGE_GAP = 10  # gap between pages (pixels)
     def getScreen(self, ctrl, doExtra, partials = False, pageCache = None):
         cfgGui = ctrl.getCfgGui()
         textOp = pml.TextOp
@@ -274,8 +301,6 @@ class ViewModeLayout(ViewMode):
 
         width, height = ctrl.GetClientSize()
 
-        # gap between pages (pixels)
-        pageGap = 10
         pager = mypager.Pager(ctrl.sp.cfg)
 
         mm2p = ctrl.mm2p
@@ -307,7 +332,7 @@ class ViewModeLayout(ViewMode):
                 if not topOfPage:
                     y = -int(op.y * mm2p)
                 else:
-                    y = pageGap
+                    y = self.PAGE_GAP
 
                 break
             else:
@@ -366,7 +391,7 @@ class ViewModeLayout(ViewMode):
                                         cfgGui.fonts[op.flags & 3],
                                         op.flags & pml.UNDERLINED))
 
-            y = pageY + ctrl.pageH + pageGap
+            y = pageY + ctrl.pageH + self.PAGE_GAP
             pg = None
 
         # if user has inserted new text causing the script to overflow
@@ -385,6 +410,23 @@ class ViewModeLayout(ViewMode):
         # lines.
         return int(ctrl.chY * ctrl.mm2p + 1.0)
 
+    def getDocumentHeight(self, ctrl, untilLine: Optional[int] = None) -> int:
+        '''
+        :type ctrl: trelby.MyCtrl
+        '''
+        if untilLine is None:
+            untilPage = len(ctrl.sp.pages)
+        else:
+            untilPage = ctrl.sp.line2page(untilLine) - 1
+
+        height = (untilPage - 1) * (ctrl.pageH + self.PAGE_GAP)
+        height += 2 * self.PAGE_GAP # gap on top and on the bottom
+
+        if untilLine is not None:
+            height += ctrl.chY * ctrl.mm2p # in case a specific line is requested, we need to be line exact
+
+        return height
+
     def getPageWidth(self, ctrl):
         return (ctrl.sp.cfg.paperWidth / ctrl.chX) *\
                ctrl.getCfgGui().fonts[pml.NORMAL].fx
@@ -402,7 +444,7 @@ class ViewModeLayout(ViewMode):
 # would have, as many pages at a time as fit on the screen, complete pages
 # only, in a single row.
 class ViewModeSideBySide(ViewMode):
-
+    PAGE_GAP = 10 # gap between pages (+ screen left edge)
     def getScreen(self, ctrl, doExtra, partials = False, pageCache = None):
         cfgGui = ctrl.getCfgGui()
         textOp = pml.TextOp
@@ -414,57 +456,55 @@ class ViewModeSideBySide(ViewMode):
 
         mm2p = ctrl.mm2p
 
-        # gap between pages (+ screen left edge)
-        pageGap = 10
-
         # how many pages fit on screen
-        pageCnt = max(1, (width - pageGap) // (ctrl.pageW + pageGap))
+        pagesPerRow = max(1, (width - self.PAGE_GAP) // (ctrl.pageW + self.PAGE_GAP))
 
         pager = mypager.Pager(ctrl.sp.cfg)
 
-        topLine = ctrl.sp.getTopLine()
-        pageNr = ctrl.sp.line2page(topLine)
+        pageNr = 1 # for now, we just render the whole document
 
         if doExtra and ctrl.sp.cfg.pdfShowSceneNumbers:
             pager.scene = ctrl.sp.getSceneNumber(
                 ctrl.sp.page2lines(pageNr)[0] - 1)
 
-        pagesDone = 0
+        sy = self.PAGE_GAP
+        while (pageNr < len(ctrl.sp.pages)):
+            pagesDonePerRow = 0
+            sx = self.PAGE_GAP
+            while 1:
+                if (pagesDonePerRow >= pagesPerRow) or (pageNr >= len(ctrl.sp.pages)):
+                    break
 
-        while 1:
-            if (pagesDone >= pageCnt) or (pageNr >= len(ctrl.sp.pages)):
-                break
+                # we'd have to go back an arbitrary number of pages to get an
+                # accurate number for this in the worst case, so disable it
+                # altogether.
+                pager.sceneContNr = 0
 
-            # we'd have to go back an arbitrary number of pages to get an
-            # accurate number for this in the worst case, so disable it
-            # altogether.
-            pager.sceneContNr = 0
+                if pageCache:
+                    pg = pageCache.getPage(pager, pageNr)
+                else:
+                    pg = ctrl.sp.generatePMLPage(pager, pageNr, False,
+                                                 doExtra)
+                if not pg:
+                    break
 
-            if pageCache:
-                pg = pageCache.getPage(pager, pageNr)
-            else:
-                pg = ctrl.sp.generatePMLPage(pager, pageNr, False,
-                                             doExtra)
-            if not pg:
-                break
+                sx += pagesDonePerRow * (ctrl.pageW + self.PAGE_GAP)
 
-            sx = pageGap + pagesDone * (ctrl.pageW + pageGap)
-            sy = pageGap
+                dp = DisplayPage(pageNr, sx, sy, sx + ctrl.pageW,
+                                 sy + ctrl.pageH)
+                dpages.append(dp)
 
-            dp = DisplayPage(pageNr, sx, sy, sx + ctrl.pageW,
-                             sy + ctrl.pageH)
-            dpages.append(dp)
+                for op in pg.ops:
+                    if not isinstance(op, textOp):
+                        continue
 
-            for op in pg.ops:
-                if not isinstance(op, textOp):
-                    continue
+                    texts.append(TextString(op.line, op.text,
+                                            int(sx + op.x * mm2p), int(sy + op.y * mm2p),
+                                            cfgGui.fonts[op.flags & 3], op.flags & pml.UNDERLINED))
 
-                texts.append(TextString(op.line, op.text,
-                    int(sx + op.x * mm2p), int(sy + op.y * mm2p),
-                    cfgGui.fonts[op.flags & 3], op.flags & pml.UNDERLINED))
-
-            pageNr += 1
-            pagesDone += 1
+                pageNr += 1
+                pagesDonePerRow += 1
+            sy += ctrl.pageH + self.PAGE_GAP
 
         return (texts, dpages)
 
@@ -472,6 +512,11 @@ class ViewModeSideBySide(ViewMode):
         # the + 1.0 avoids occasional non-consecutive backgrounds for
         # lines.
         return int(ctrl.chY * ctrl.mm2p + 1.0)
+    def getDocumentHeight(self, ctrl) -> int:
+        pagesPerRow = max(1, (ctrl.GetClientSize().GetWidth() - self.PAGE_GAP) // (ctrl.pageW + self.PAGE_GAP))
+        rows = math.ceil((len(ctrl.sp.pages) - 1) / pagesPerRow)
+
+        return int(rows * (ctrl.pageH + self.PAGE_GAP) + 2 * self.PAGE_GAP)
 
     def getPageWidth(self, ctrl):
         return (ctrl.sp.cfg.paperWidth / ctrl.chX) *\
