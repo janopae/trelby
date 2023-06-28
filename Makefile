@@ -23,6 +23,13 @@ trelby.1.gz: doc/*
 rpm: dist
 	python3 setup.py bdist_rpm
 
+flatpak-bundle: dist
+	flatpak-builder --repo=dist/repo --force-clean build-dir Devel.flatpak-manifest.yml
+	flatpak build-bundle dist/repo dist/trelby.flatpak com.github.limburgher.trelby.Devel
+
+install-flatpak: dist
+	flatpak-builder --user --install --force-clean build-dir Devel.flatpak-manifest.yml
+
 clean:
 	rm -f bin/*.pyc src/*.pyc tests/*.pyc names.txt.gz dict_en.dat.gz manual.html MANIFEST trelby.1.gz doc/trelby.1.gz
 	rm -rf build dist
