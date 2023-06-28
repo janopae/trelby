@@ -1,0 +1,13 @@
+app-id: com.github.limburgher.trelby.Devel
+runtime: org.freedesktop.Platform
+runtime-version: '22.08'
+sdk: org.freedesktop.Sdk
+command: trelby
+modules:
+  - name: trelby
+    buildsystem: simple
+    build-commands:
+      - python3 setup.py install --prefix /app
+    sources:
+      - type: dir
+        path: .
