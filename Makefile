@@ -1,6 +1,6 @@
 PREFIX = $(DESTDIR)/usr
 
-.PHONY : clean dist deb
+.PHONY : clean dist deb install-flatpak
 
 dist: names.txt.gz dict_en.dat.gz manual.html trelby.1.gz
 	python3 setup.py sdist && cp trelby.1.gz doc/
@@ -23,12 +23,14 @@ trelby.1.gz: doc/*
 rpm: dist
 	python3 setup.py bdist_rpm
 
-flatpak-bundle: dist
+dist/repo: names.txt.gz dict_en.dat.gz manual.html
 	flatpak-builder --repo=dist/repo --force-clean build-dir Devel.flatpak-manifest.yml
+
+dist/trelby.flatpak: dist/repo
 	flatpak build-bundle dist/repo dist/trelby.flatpak com.github.limburgher.trelby.Devel
 
-install-flatpak: dist
-	flatpak-builder --user --install --force-clean build-dir Devel.flatpak-manifest.yml
+install-flatpak: dist/trelby.flatpak
+	flatpak install dist/trelby.flatpak
 
 clean:
 	rm -f bin/*.pyc src/*.pyc tests/*.pyc names.txt.gz dict_en.dat.gz manual.html MANIFEST trelby.1.gz doc/trelby.1.gz
