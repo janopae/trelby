@@ -33,7 +33,7 @@ dist/trelby.flatpak: dist/repo
 	flatpak build-bundle dist/repo dist/trelby.flatpak com.github.limburgher.trelby.Devel
 
 install-flatpak: dist/trelby.flatpak
-	flatpak install dist/trelby.flatpak
+	flatpak --user install dist/trelby.flatpak
 
 clean:
 	rm -f bin/*.pyc src/*.pyc tests/*.pyc names.txt.gz dict_en.dat.gz manual.html MANIFEST trelby.1.gz doc/trelby.1.gz
