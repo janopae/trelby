@@ -5,6 +5,7 @@ sdk: org.freedesktop.Sdk
 command: trelby
 finish-args:
     - --socket=x11 # wxWidgets should be able to use Wayland, but in the Flatpak, it still tries to use X for some reason...
+    - --filesystem=host # we don't use portals for opening files yet (wxWidgets does not support that). In this situation, filesystem=host is the only responsible solution in order to not create problems when accessing files on removable drives etc.
 modules:
   - "pypi-dependencies.flatpak-manifest.yaml"
   - name: trelby
