@@ -8,7 +8,8 @@ modules:
   - name: trelby
     buildsystem: simple
     build-commands:
-      - python3 setup.py install --prefix /app
+      - python3 -m venv /app # To make sure all python paths are in /app, we need to create a virtual environment
+      - /app/bin/python3 setup.py install --prefix /app --install-lib="/app/lib/python{py_version_short}/site-packages/" # install-lib gets set to a non-default value in setup.cfg, so we need to overwrite it
     sources:
       - type: dir
         path: .
