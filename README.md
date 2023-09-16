@@ -36,6 +36,20 @@ https://software.opensuse.org//download.html?project=home%3Agwync&package=trelby
 
 sudo dnf install trelby
 
+#### Flatpak
+
+You can build your own Flatpak file:
+
+```bash
+make dist/trelby.flatpak
+```
+
+and install it:
+
+```bash
+make install-flatpak
+```
+
 #### Windows
 
 Currently unsupported, see above.
