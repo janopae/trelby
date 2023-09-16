@@ -23,7 +23,10 @@ trelby.1.gz: doc/*
 rpm: dist
 	python3 setup.py bdist_rpm
 
-dist/repo: names.txt.gz dict_en.dat.gz manual.html
+pypi-dependencies.flatpak-manifest.yaml: requirements.txt
+	flatpak-builder-tools/pip/flatpak-pip-generator --runtime=org.freedesktop.Sdk//22.08 --requirements-file=requirements.txt attrdict3 --output pypi-dependencies.flatpak-manifest --yaml
+
+dist/repo: names.txt.gz dict_en.dat.gz manual.html pypi-dependencies.flatpak-manifest.yaml Devel.flatpak-manifest.yml
 	flatpak-builder --repo=dist/repo --force-clean build-dir Devel.flatpak-manifest.yml
 
 dist/trelby.flatpak: dist/repo

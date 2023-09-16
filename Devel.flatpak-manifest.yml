@@ -4,6 +4,7 @@ runtime-version: '22.08'
 sdk: org.freedesktop.Sdk
 command: trelby
 modules:
+  - "pypi-dependencies.flatpak-manifest.yaml"
   - name: trelby
     buildsystem: simple
     build-commands:
