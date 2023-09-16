@@ -3,6 +3,8 @@ runtime: org.freedesktop.Platform
 runtime-version: '23.08'
 sdk: org.freedesktop.Sdk
 command: trelby
+finish-args:
+    - --socket=x11 # wxWidgets should be able to use Wayland, but in the Flatpak, it still tries to use X for some reason...
 modules:
   - "pypi-dependencies.flatpak-manifest.yaml"
   - name: trelby
