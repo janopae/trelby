@@ -30,10 +30,10 @@ jobs:
             build-dir
           key: flatpak-build-cache
 
-      - name: Install Flatpak
+      - name: Install Linux dependencies
         run: |
           sudo apt update
-          sudo apt install flatpak
+          sudo apt install flatpak xsltproc
       - name: Make Flatpak file
         run: |
           make dist/trelby.flatpak
