@@ -33,7 +33,7 @@ jobs:
       - name: Install Linux dependencies
         run: |
           sudo apt update
-          sudo apt install flatpak xsltproc
+          sudo apt install flatpak xsltproc docbook-xsl
       - name: Make Flatpak file
         run: |
           make dist/trelby.flatpak
