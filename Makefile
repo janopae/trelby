@@ -33,7 +33,7 @@ pypi-dependencies.flatpak-manifest.yaml: requirements.txt flatpak-builder-tools/
 	flatpak-builder-tools/pip/flatpak-pip-generator --runtime=org.freedesktop.Sdk//23.08 --requirements-file=requirements.txt attrdict3 --output pypi-dependencies.flatpak-manifest --yaml
 
 dist/repo: src bin names.txt.gz dict_en.dat.gz manual.html setup.py pypi-dependencies.flatpak-manifest.yaml Devel.flatpak-manifest.yml
-	flatpak install flathub org.freedesktop.Platform//23.08 org.freedesktop.Sdk//23.08
+	flatpak install -y --noninteractive --user flathub org.freedesktop.Platform//23.08 org.freedesktop.Sdk//23.08
 	flatpak-builder --repo=dist/repo --force-clean build-dir Devel.flatpak-manifest.yml
 
 dist/trelby.flatpak: dist/repo
