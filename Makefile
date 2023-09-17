@@ -25,6 +25,7 @@ rpm: dist
 
 flatpak-builder-tools/pip/flatpak-pip-generator:
 	git submodule update --init flatpak-builder-tools
+	pip3 install --user requirements-parser
 
 pypi-dependencies.flatpak-manifest.yaml: requirements.txt flatpak-builder-tools/pip/flatpak-pip-generator
 	flatpak-builder-tools/pip/flatpak-pip-generator --runtime=org.freedesktop.Sdk//22.08 --requirements-file=requirements.txt attrdict3 --output pypi-dependencies.flatpak-manifest --yaml
