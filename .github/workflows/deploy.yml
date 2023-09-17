@@ -28,7 +28,7 @@ jobs:
           path: |
             .flatpak-builder
             build-dir
-        key: flatpak-build-cache
+          key: flatpak-build-cache
 
       - name: Install Flatpak
         run: |
