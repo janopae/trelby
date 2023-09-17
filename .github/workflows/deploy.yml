@@ -1,0 +1,60 @@
+on:
+  release:
+    types: [published]
+
+name: Create downloads for release
+
+jobs:
+  flatpak:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Restore Flatpak dependency declarations cache
+        uses: actions/cache/restore@v3
+        with:
+          path: pypi-dependencies.flatpak-manifest.yaml
+          key: flatpak-dependencies-${{ hashFiles('**/requirements.txt') }}
+      - name: Restore Flatpak build cache
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            .flatpak-builder
+            build-dir
+        key: flatpak-build-cache
+
+      - name: Install Flatpak
+        run: |
+          sudo apt update
+          sudo apt install flatpak
+      - name: Make Flatpak file
+        run: |
+          make dist/trelby.flatpak
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: dist/trelby.flatpak
+          asset_name: trelby.flatpak
+          tag: ${{ github.ref }}
+          overwrite: true
+
+      - name: Cache Flatpak dependency declarations
+        uses: actions/cache/save@v3
+        with:
+          path: pypi-dependencies.flatpak-manifest.yaml
+          key: flatpak-dependencies-${{ hashFiles('**/requirements.txt') }}
+      - name: Cache Flatpak build
+        uses: actions/cache/save@v3
+        with:
+          path: |
+            .flatpak-builder
+            build-dir
+          key: flatpak-build-cache
