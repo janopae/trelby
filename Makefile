@@ -28,7 +28,7 @@ flatpak-builder-tools/pip/flatpak-pip-generator:
 	pip3 install --user requirements-parser PyYAML
 
 pypi-dependencies.flatpak-manifest.yaml: requirements.txt flatpak-builder-tools/pip/flatpak-pip-generator
-	flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+	flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 	flatpak install org.freedesktop.Sdk//23.08
 	flatpak-builder-tools/pip/flatpak-pip-generator --runtime=org.freedesktop.Sdk//23.08 --requirements-file=requirements.txt attrdict3 --output pypi-dependencies.flatpak-manifest --yaml
 
