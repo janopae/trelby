@@ -16,7 +16,7 @@ import os.path
 def modify_import_path_in_trelby_bin(path_to_trelby_bin: str, src_path_in_final_installation: str):
     in_file = open(path_to_trelby_bin, "rt")
     text = in_file.read()
-    text = text.replace('src', src_path_in_final_installation)
+    text = text.replace('"src"', '"'+src_path_in_final_installation+'"')
     in_file.close()
     out_file = open(path_to_trelby_bin, "wt")
     out_file.write(text)
