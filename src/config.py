@@ -961,9 +961,9 @@ class ConfigGlobal:
 
             Command("Watermark", "Generate watermarked PDFs.",
                     isMenu = True),
-            Command("ZoomIn", "Makes content bigger.", [util.Key(ord('+'), ctrl = True).toInt()], isMenu = True,
+            Command("ZoomIn", "Display screenplay bigger", [util.Key(ord('+'), ctrl = True).toInt()], isMenu = True,
                     isFixed = True),
-            Command("ZoomOut", "Makes content smaller.", [util.Key(ord('-'), ctrl = True).toInt()], isMenu = True,
+            Command("ZoomOut", "Display screenplay smaller.", [util.Key(ord('-'), ctrl = True).toInt()], isMenu = True,
                     isFixed = True),
             ]
 
