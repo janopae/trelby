@@ -1405,7 +1405,14 @@ class MyCtrl(wx.Control):
 
         self.updateScreen()
 
-    _zoomFactor: float = 1.5
+    _zoomFactor: float = 1.0
+
+    def zoom(self, difference: float) -> None:
+        if self._zoomFactor + difference <= 0:
+            return
+
+        self._zoomFactor += difference
+        self.Refresh()
 
     def OnPaint(self, event):
         #ldkjfldsj = util.TimerDev("paint")
@@ -1770,6 +1777,9 @@ class MyFrame(wx.Frame):
             viewMenu.Check(ID_VIEW_STYLE_SIDE_BY_SIDE, True)
 
         viewMenu.AppendSeparator()
+        viewMenu.Append(ID_VIEW_ZOOM_IN, 'Zoom &in\tCTRL-+')
+        viewMenu.Append(ID_VIEW_ZOOM_OUT, 'Zoom &out\tCTRL--')
+        viewMenu.AppendSeparator()
         viewMenu.AppendCheckItem(ID_VIEW_SHOW_FORMATTING, "&Show formatting")
         viewMenu.Append(ID_VIEW_FULL_SCREEN, "&Fullscreen\tF11")
 
@@ -1952,6 +1962,8 @@ class MyFrame(wx.Frame):
             self.Bind(wx.EVT_MENU, self.OnViewModeChange, id=ID_VIEW_STYLE_DRAFT)
             self.Bind(wx.EVT_MENU, self.OnViewModeChange, id=ID_VIEW_STYLE_LAYOUT)
             self.Bind(wx.EVT_MENU, self.OnViewModeChange, id=ID_VIEW_STYLE_SIDE_BY_SIDE)
+            self.Bind(wx.EVT_MENU, self.OnZoomIn, id=ID_VIEW_ZOOM_IN)
+            self.Bind(wx.EVT_MENU, self.OnZoomOut, id=ID_VIEW_ZOOM_OUT)
             self.Bind(wx.EVT_MENU, self.OnShowFormatting, id=ID_VIEW_SHOW_FORMATTING)
             self.Bind(wx.EVT_MENU, self.ToggleFullscreen, id=ID_VIEW_FULL_SCREEN)
             self.Bind(wx.EVT_MENU, self.OnFindNextError, id=ID_SCRIPT_FIND_ERROR)
@@ -2072,6 +2084,8 @@ class MyFrame(wx.Frame):
             "ID_VIEW_STYLE_DRAFT",
             "ID_VIEW_STYLE_LAYOUT",
             "ID_VIEW_STYLE_SIDE_BY_SIDE",
+            "ID_VIEW_ZOOM_IN",
+            "ID_VIEW_ZOOM_OUT",
             "ID_TOOLBAR_SETTINGS",
             "ID_TOOLBAR_SCRIPTSETTINGS",
             "ID_TOOLBAR_REPORTS",
@@ -2585,6 +2599,12 @@ class MyFrame(wx.Frame):
     def OnSize(self, event):
         gd.width, gd.height = self.GetSize()
         event.Skip()
+
+    def OnZoomIn(self, event=None):
+        self.panel.ctrl.zoom(0.25)
+
+    def OnZoomOut(self, event=None):
+        self.panel.ctrl.zoom(-0.25)
 
 class MyApp(wx.App):
 

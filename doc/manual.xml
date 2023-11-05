@@ -595,6 +595,12 @@
 
 	</sect1>
 
+  	<sect1>
+		<title>View/Zoom in,Zoom out</title>
+
+		<para>Zooms the document in steps of 25&nbsp;%. You can also zoom using CTRL + Plus or CTRL + Minus on your keyboard.</para>
+	</sect1>
+
 	<sect1>
 	  <title>View/Show formatting</title>
 
