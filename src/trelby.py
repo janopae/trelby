@@ -1405,6 +1405,8 @@ class MyCtrl(wx.Control):
 
         self.updateScreen()
 
+    _zoomFactor: float = 1.5
+
     def OnPaint(self, event):
         #ldkjfldsj = util.TimerDev("paint")
 
@@ -1434,6 +1436,8 @@ class MyCtrl(wx.Control):
 
         strings, dpages = gd.vm.getScreen(self, True, True)
 
+        # draw background
+
         dc.SetBrush(cfgGui.workspaceBrush)
         dc.SetPen(cfgGui.workspacePen)
         dc.DrawRectangle(0, 0, size.width, size.height)
@@ -1441,32 +1445,37 @@ class MyCtrl(wx.Control):
         dc.SetPen(cfgGui.tabBorderPen)
         dc.DrawLine(0,0,0,size.height)
 
+        # draw pages
+
+        zoomedGraphicsContext = wx.GCDC(dc)
+        zoomedGraphicsContext.SetUserScale(self._zoomFactor, self._zoomFactor)
+
         if not dpages:
             # draft mode; draw an infinite page
             lx = util.clamp((size.width - self.pageW) // 2, 0)
             rx = lx + self.pageW
 
-            dc.SetBrush(cfgGui.textBgBrush)
-            dc.SetPen(cfgGui.textBgPen)
-            dc.DrawRectangle(lx, 5, self.pageW, size.height - 5)
+            zoomedGraphicsContext.SetBrush(cfgGui.textBgBrush)
+            zoomedGraphicsContext.SetPen(cfgGui.textBgPen)
+            zoomedGraphicsContext.DrawRectangle(lx, 5, self.pageW, size.height - 5)
 
-            dc.SetPen(cfgGui.pageBorderPen)
-            dc.DrawLine(lx, 5, lx, size.height)
-            dc.DrawLine(rx, 5, rx, size.height)
+            zoomedGraphicsContext.SetPen(cfgGui.pageBorderPen)
+            zoomedGraphicsContext.DrawLine(lx, 5, lx, size.height)
+            zoomedGraphicsContext.DrawLine(rx, 5, rx, size.height)
 
         else:
-            dc.SetBrush(cfgGui.textBgBrush)
-            dc.SetPen(cfgGui.pageBorderPen)
+            zoomedGraphicsContext.SetBrush(cfgGui.textBgBrush)
+            zoomedGraphicsContext.SetPen(cfgGui.pageBorderPen)
             for dp in dpages:
-                dc.DrawRectangle(dp.x1, dp.y1, dp.x2 - dp.x1 + 1,
+                zoomedGraphicsContext.DrawRectangle(dp.x1, dp.y1, dp.x2 - dp.x1 + 1,
                                  dp.y2 - dp.y1 + 1)
 
-            dc.SetPen(cfgGui.pageShadowPen)
+            zoomedGraphicsContext.SetPen(cfgGui.pageShadowPen)
             for dp in dpages:
                 # + 2 because DrawLine doesn't draw to end point but stops
                 # one pixel short...
-                dc.DrawLine(dp.x1 + 1, dp.y2 + 1, dp.x2 + 1, dp.y2 + 1)
-                dc.DrawLine(dp.x2 + 1, dp.y1 + 1, dp.x2 + 1, dp.y2 + 2)
+                zoomedGraphicsContext.DrawLine(dp.x1 + 1, dp.y2 + 1, dp.x2 + 1, dp.y2 + 1)
+                zoomedGraphicsContext.DrawLine(dp.x2 + 1, dp.y1 + 1, dp.x2 + 1, dp.y2 + 2)
 
         for t in strings:
             i = t.line
@@ -1478,54 +1487,54 @@ class MyCtrl(wx.Control):
                 l = ls[i]
 
                 if l.lt == screenplay.NOTE:
-                    dc.SetPen(cfgGui.notePen)
-                    dc.SetBrush(cfgGui.noteBrush)
+                    zoomedGraphicsContext.SetPen(cfgGui.notePen)
+                    zoomedGraphicsContext.SetBrush(cfgGui.noteBrush)
 
                     nx = t.x - 5
                     nw = self.sp.cfg.getType(l.lt).width * fx + 10
 
-                    dc.DrawRectangle(nx, y, nw, lineh)
+                    zoomedGraphicsContext.DrawRectangle(nx, y, nw, lineh)
 
-                    dc.SetPen(cfgGui.textPen)
-                    util.drawLine(dc, nx - 1, y, 0, lineh)
-                    util.drawLine(dc, nx + nw, y, 0, lineh)
+                    zoomedGraphicsContext.SetPen(cfgGui.textPen)
+                    util.drawLine(zoomedGraphicsContext, nx - 1, y, 0, lineh)
+                    util.drawLine(zoomedGraphicsContext, nx + nw, y, 0, lineh)
 
                     if self.sp.isFirstLineOfElem(i):
-                        util.drawLine(dc, nx - 1, y - 1, nw + 2, 0)
+                        util.drawLine(zoomedGraphicsContext, nx - 1, y - 1, nw + 2, 0)
 
                     if self.sp.isLastLineOfElem(i):
-                        util.drawLine(dc, nx - 1, y + lineh,
+                        util.drawLine(zoomedGraphicsContext, nx - 1, y + lineh,
                                       nw + 2, 0)
 
                 if marked and self.sp.isLineMarked(i, marked):
                     c1, c2 = self.sp.getMarkedColumns(i, marked)
 
-                    dc.SetPen(cfgGui.selectedPen)
-                    dc.SetBrush(cfgGui.selectedBrush)
+                    zoomedGraphicsContext.SetPen(cfgGui.selectedPen)
+                    zoomedGraphicsContext.SetBrush(cfgGui.selectedBrush)
 
-                    dc.DrawRectangle(t.x + c1 * fx, y, (c2 - c1 + 1) * fx,
+                    zoomedGraphicsContext.DrawRectangle(t.x + c1 * fx, y, (c2 - c1 + 1) * fx,
                         lineh)
 
                 if mainFrame.showFormatting:
-                    dc.SetPen(cfgGui.bluePen)
-                    util.drawLine(dc, t.x, y, 0, lineh)
+                    zoomedGraphicsContext.SetPen(cfgGui.bluePen)
+                    util.drawLine(zoomedGraphicsContext, t.x, y, 0, lineh)
 
                     extraIndent = 1 if self.sp.needsExtraParenIndent(i) else 0
 
-                    util.drawLine(dc,
+                    util.drawLine(zoomedGraphicsContext,
                         t.x + (self.sp.cfg.getType(l.lt).width - extraIndent) * fx,
                         y, 0, lineh)
 
-                    dc.SetTextForeground(cfgGui.redColor)
-                    dc.SetFont(cfgGui.fonts[pml.NORMAL].font)
-                    dc.DrawText(config.lb2char(l.lb), t.x - 10, y)
+                    zoomedGraphicsContext.SetTextForeground(cfgGui.redColor)
+                    zoomedGraphicsContext.SetFont(cfgGui.fonts[pml.NORMAL].font)
+                    zoomedGraphicsContext.DrawText(config.lb2char(l.lb), t.x - 10, y)
 
                 if not dpages:
                     if cfgGl.pbi == config.PBI_REAL_AND_UNADJ:
                         if self.sp.line2pageNoAdjust(i) != \
                                self.sp.line2pageNoAdjust(i + 1):
-                            dc.SetPen(cfgGui.pagebreakNoAdjustPen)
-                            util.drawLine(dc, 0, y + lineh - 1,
+                            zoomedGraphicsContext.SetPen(cfgGui.pagebreakNoAdjustPen)
+                            util.drawLine(zoomedGraphicsContext, 0, y + lineh - 1,
                                 size.width, 0)
 
                     if cfgGl.pbi in (config.PBI_REAL,
@@ -1533,17 +1542,17 @@ class MyCtrl(wx.Control):
                         thisPage = self.sp.line2page(i)
 
                         if thisPage != self.sp.line2page(i + 1):
-                            dc.SetPen(cfgGui.pagebreakPen)
-                            util.drawLine(dc, 0, y + lineh - 1,
+                            zoomedGraphicsContext.SetPen(cfgGui.pagebreakPen)
+                            util.drawLine(zoomedGraphicsContext, 0, y + lineh - 1,
                                 size.width, 0)
 
                 if i == self.sp.line:
                     posX = t.x
                     cursorY = y
                     acFi = fi
-                    dc.SetPen(cfgGui.cursorPen)
-                    dc.SetBrush(cfgGui.cursorBrush)
-                    dc.DrawRectangle(t.x + self.sp.column * fx, y, fx, fi.fy)
+                    zoomedGraphicsContext.SetPen(cfgGui.cursorPen)
+                    zoomedGraphicsContext.SetBrush(cfgGui.cursorBrush)
+                    zoomedGraphicsContext.DrawRectangle(t.x + self.sp.column * fx, y, fx, fi.fy)
 
             if len(t.text) != 0:
                 #tl = texts.get(fi.font)
@@ -1572,22 +1581,22 @@ class MyCtrl(wx.Control):
                                len(t.text) * fx - 1))
 
         if ulines:
-            dc.SetPen(cfgGui.textPen)
+            zoomedGraphicsContext.SetPen(cfgGui.textPen)
 
             for ul in ulines:
-                util.drawLine(dc, ul[0], ul[1], ul[2], 0)
+                util.drawLine(zoomedGraphicsContext, ul[0], ul[1], ul[2], 0)
 
         if ulinesHdr:
-            dc.SetPen(cfgGui.textHdrPen)
+            zoomedGraphicsContext.SetPen(cfgGui.textHdrPen)
 
             for ul in ulinesHdr:
-                util.drawLine(dc, ul[0], ul[1], ul[2], 0)
+                util.drawLine(zoomedGraphicsContext, ul[0], ul[1], ul[2], 0)
 
         for tl in texts:
-            gd.vm.drawTexts(self, dc, tl)
+            gd.vm.drawTexts(self, zoomedGraphicsContext, tl)
 
         if self.sp.acItems and (cursorY > 0):
-            self.drawAutoComp(dc, posX, cursorY, acFi)
+            self.drawAutoComp(zoomedGraphicsContext, posX, cursorY, acFi)
 
     def drawAutoComp(self, dc, posX, cursorY, fi):
         ac = self.sp.acItems
