@@ -453,7 +453,7 @@ class MyCtrl(wx.Control):
 
     def updateScreen(self, redraw = True, setCommon = True):
         self.adjustScrollBar()
-        self.SetMinSize(wx.Size(int(self.pageW), 10)) # the vertical min size is irrelevant currently, as vertical scrolling is still self-implemented
+        self.SetMinSize(wx.Size(int(self.pageW * self._zoomFactor), 10)) # the vertical min size is irrelevant currently, as vertical scrolling is still self-implemented
         self.PostSizeEventToParent()
 
         if setCommon:
@@ -1412,7 +1412,7 @@ class MyCtrl(wx.Control):
             return
 
         self._zoomFactor += difference
-        self.Refresh()
+        self.updateScreen()
 
     def OnPaint(self, event):
         #ldkjfldsj = util.TimerDev("paint")
