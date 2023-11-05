@@ -596,9 +596,12 @@
 	</sect1>
 
   	<sect1>
-		<title>View/Zoom in,Zoom out</title>
+	  <title>View/Zoom in,Zoom out</title>
 
-		<para>Makes the script appear bigger or smaller in steps of 25&nbsp;%. You can also zoom using CTRL + Plus or CTRL + Minus on your keyboard.</para>
+	  <para>Makes the script appear bigger or smaller in steps of
+	  25&nbsp;%. You can also zoom using CTRL + Plus or CTRL + Minus on
+	  your keyboard.</para>
+
 	</sect1>
 
 	<sect1>
