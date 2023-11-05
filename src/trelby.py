@@ -1,4 +1,5 @@
 # -*- coding: iso-8859-1 -*-
+from typing import Optional
 
 from error import TrelbyError
 import autocompletiondlg
@@ -1414,6 +1415,20 @@ class MyCtrl(wx.Control):
         self._zoomFactor += difference
         self.updateScreen()
 
+    def GetLogicalClientSize(self, graphicsContext: Optional[wx.GCDC] = None) -> wx.Size:
+        """
+        When calculating layout based on the available size, use this rather than GetClientSize.
+
+        GetClientSize returns the real size in absolute px, no zoom taken into account. When calculating the layout
+        however, we need to do that independently of zoom. That's why we use a unit called "logical px" for creating
+        the layout, that later gets translated to "real" px.
+        """
+        if graphicsContext is None:
+            graphicsContext = wx.GCDC()
+            graphicsContext.SetUserScale(self._zoomFactor, self._zoomFactor)
+
+        return graphicsContext.DeviceToLogicalRel(self.GetClientSize())
+
     def OnPaint(self, event):
         #ldkjfldsj = util.TimerDev("paint")
 
@@ -1456,6 +1471,8 @@ class MyCtrl(wx.Control):
 
         zoomedGraphicsContext = wx.GCDC(dc)
         zoomedGraphicsContext.SetUserScale(self._zoomFactor, self._zoomFactor)
+
+        size = self.GetLogicalClientSize(zoomedGraphicsContext)
 
         if not dpages:
             # draft mode; draw an infinite page

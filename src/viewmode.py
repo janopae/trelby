@@ -200,7 +200,7 @@ class ViewModeDraft(ViewMode):
         cfg = ctrl.sp.cfg
         cfgGui = ctrl.getCfgGui()
 
-        width, height = ctrl.GetClientSize()
+        width, height = ctrl.GetLogicalClientSize()
         ls = ctrl.sp.lines
         y = 15
         i = ctrl.sp.getTopLine()
@@ -272,7 +272,7 @@ class ViewModeLayout(ViewMode):
         texts = []
         dpages = []
 
-        width, height = ctrl.GetClientSize()
+        width, height = ctrl.GetLogicalClientSize()
 
         # gap between pages (pixels)
         pageGap = 10
@@ -410,7 +410,7 @@ class ViewModeSideBySide(ViewMode):
         texts = []
         dpages = []
 
-        width, height = ctrl.GetClientSize()
+        width, height = ctrl.GetLogicalClientSize()
 
         mm2p = ctrl.mm2p
 
