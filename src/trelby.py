@@ -584,7 +584,7 @@ class MyCtrl(wx.Control):
             self.sp.clearMark()
             self.updateScreen()
 
-        pos = event.GetPosition()
+        pos = self.__getScaledGCDC().DeviceToLogical(event.GetPosition())
         line, col = gd.vm.pos2linecol(self, pos.x, pos.y)
 
         self.mouseSelectActive = True
@@ -608,7 +608,7 @@ class MyCtrl(wx.Control):
             self.OnLeftDown(event, mark = True)
 
     def OnRightDown(self, event):
-        pos = event.GetPosition()
+        pos = self.__getScaledGCDC().DeviceToLogical(event.GetPosition())
         line, col = gd.vm.pos2linecol(self, pos.x, pos.y)
 
         if self.sp.mark:
@@ -1424,10 +1424,15 @@ class MyCtrl(wx.Control):
         the layout, that later gets translated to "real" px.
         """
         if context is None:
-            context = wx.GCDC()
-            context.SetUserScale(self._zoomFactor, self._zoomFactor)
+            context = self.__getScaledGCDC()
 
         return context.DeviceToLogicalRel(self.GetClientSize())
+
+    def __getScaledGCDC(self):
+        context = wx.GCDC()
+        context.SetUserScale(self._zoomFactor, self._zoomFactor)
+
+        return context
 
     def OnPaint(self, event):
         #ldkjfldsj = util.TimerDev("paint")
